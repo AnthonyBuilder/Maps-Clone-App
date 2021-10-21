@@ -93,15 +93,14 @@ struct MapView: View {
 
 // Top-bar searchBar
 struct SearchLocation: View {
+    @State var local = ""
 
-    
-    
     var body: some View {
         HStack {
             Image(systemName: "magnifyingglass")
                 .padding(.leading)
             VStack(alignment: .leading) {
-                TextField("Buscar no App Mapas", text: $search)
+                TextField("Buscar no App Mapas", text: $local)
                     .font(.headline)
                     .padding(10)
                     .overlay(
