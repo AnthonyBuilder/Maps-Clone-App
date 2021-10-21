@@ -17,6 +17,8 @@
 		86CF390C271EFF20004690ED /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86CF38E2271EFF18004690ED /* ContentView.swift */; };
 		86CF390D271EFF20004690ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 86CF38E3271EFF20004690ED /* Assets.xcassets */; };
 		86CF390E271EFF20004690ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 86CF38E3271EFF20004690ED /* Assets.xcassets */; };
+		86F17A5F272223EE00F7E2A4 /* Landmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86F17A5E272223EE00F7E2A4 /* Landmark.swift */; };
+		86F17A60272223EE00F7E2A4 /* Landmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86F17A5E272223EE00F7E2A4 /* Landmark.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +51,7 @@
 		86CF3901271EFF20004690ED /* Tests macOS.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Tests macOS.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		86CF3905271EFF20004690ED /* Tests_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests_macOS.swift; sourceTree = "<group>"; };
 		86CF3907271EFF20004690ED /* Tests_macOSLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests_macOSLaunchTests.swift; sourceTree = "<group>"; };
+		86F17A5E272223EE00F7E2A4 /* Landmark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Landmark.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +103,7 @@
 				86CF38E1271EFF18004690ED /* mapsApp.swift */,
 				86CF38E2271EFF18004690ED /* ContentView.swift */,
 				86CF38E3271EFF20004690ED /* Assets.xcassets */,
+				86F17A5E272223EE00F7E2A4 /* Landmark.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -301,6 +305,7 @@
 			files = (
 				86CF390B271EFF20004690ED /* ContentView.swift in Sources */,
 				86CF3909271EFF20004690ED /* mapsApp.swift in Sources */,
+				86F17A5F272223EE00F7E2A4 /* Landmark.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -310,6 +315,7 @@
 			files = (
 				86CF390C271EFF20004690ED /* ContentView.swift in Sources */,
 				86CF390A271EFF20004690ED /* mapsApp.swift in Sources */,
+				86F17A60272223EE00F7E2A4 /* Landmark.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
