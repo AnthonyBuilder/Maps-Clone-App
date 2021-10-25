@@ -39,6 +39,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		8652ED392727343B007CAB33 /* maps--iOS--Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "maps--iOS--Info.plist"; sourceTree = "<group>"; };
 		86CF38E1271EFF18004690ED /* mapsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mapsApp.swift; sourceTree = "<group>"; };
 		86CF38E2271EFF18004690ED /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		86CF38E3271EFF20004690ED /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -89,6 +90,7 @@
 		86CF38DB271EFF17004690ED = {
 			isa = PBXGroup;
 			children = (
+				8652ED392727343B007CAB33 /* maps--iOS--Info.plist */,
 				86CF38E0271EFF17004690ED /* Shared */,
 				86CF38EF271EFF20004690ED /* macOS */,
 				86CF38F8271EFF20004690ED /* Tests iOS */,
@@ -474,6 +476,8 @@
 				DEVELOPMENT_TEAM = 8UF6K7CB33;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "maps--iOS--Info.plist";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app need your location to show it on the map.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -504,6 +508,8 @@
 				DEVELOPMENT_TEAM = 8UF6K7CB33;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "maps--iOS--Info.plist";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app need your location to show it on the map.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

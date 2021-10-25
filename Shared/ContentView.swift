@@ -14,12 +14,51 @@ fileprivate enum Constants {
 }
 
 // MapViewModel
-private class MapViewModel {
+final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
+    
+    var locationManager: CLLocationManager?
+    
+    @Published var region = MKCoordinateRegion(center:
+                                                    CLLocationCoordinate2D(latitude: 51.507222, longitude: -0.1275),
+                                                span:
+                                                    MKCoordinateSpan(latitudeDelta: 0.5, longitudeDelta: 0.5))
+    
+    func checkIfLocatioServiceIsEnabled() {
+        if CLLocationManager.locationServicesEnabled() {
+            locationManager = CLLocationManager()
+            locationManager!.delegate = self
+            checkLocationAuthorization()
+        } else {
+            print("Show an alert letting them know this is off and to go turn it on.")
+        }
+    }
+    
+    private func checkLocationAuthorization() {
+        guard let locationManager = locationManager else { return }
+        
+        switch locationManager.authorizationStatus {
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
+        case .restricted:
+            print("Your location is restricted likely due to parental constrols.")
+        case .denied:
+            print("Your have denied this app location permissions. Go into settings to change it.")
+        case .authorizedAlways, .authorizedWhenInUse:
+            region = MKCoordinateRegion(center: locationManager.location!.coordinate, span:  MKCoordinateSpan(latitudeDelta: 0.5, longitudeDelta: 0.5))
+        @unknown default:
+            break
+        }
+    }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        checkLocationAuthorization()
+    }
+    
+    
     @State static private(set) var landmarks: [Landmark] = [Landmark]()
-    @State private var search: String = ""
     
     // get landmarks on MapKit
-    private func getNearByLandmarks() {
+    func getNearByLandmarks(location search: String) {
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = search
         
@@ -43,24 +82,22 @@ struct ContentView: View {
 }
 
 
-
-
 // Main map View
 struct MapView: View {
     
-    @State private var region = MKCoordinateRegion(center:
-                                                    CLLocationCoordinate2D(latitude: 51.507222, longitude: -0.1275),
-                                                   span:
-                                                    MKCoordinateSpan(latitudeDelta: 0.5, longitudeDelta: 0.5))
+    @StateObject private var viewModel = MapViewModel()
     @State private var bottomSheetShown = false
 
     var body: some View {
         GeometryReader { gr in
             VStack {
                 ZStack(alignment: .bottom) {
-                    Map(coordinateRegion: $region, showsUserLocation: true, userTrackingMode: .constant(.follow))
+                    Map(coordinateRegion: $viewModel.region, showsUserLocation: true, userTrackingMode: .constant(.follow))
                         .edgesIgnoringSafeArea(.all)
-                    BottomSheetView(isOpen: $bottomSheetShown, maxHeight: gr.size.height * 0.8)
+                        .onAppear {
+                            viewModel.checkIfLocatioServiceIsEnabled()
+                        }
+                    BottomSheetView(isOpen: $bottomSheetShown, maxHeight: gr.size.height * 0.8, mapViewModel: .init())
                 }
             }
         }
@@ -99,14 +136,17 @@ struct BottomSheetView: View {
     @State private var currentDragOffsetY: CGFloat = 0
     @State private var endingOffsetY: CGFloat = 0
     @State private var local = ""
+    
+    @ObservedObject var mapViewModel: MapViewModel
 
     
     let minHeight: CGFloat
     let maxHeight: CGFloat
     
-    init(isOpen: Binding<Bool>, maxHeight: CGFloat) {
+    init(isOpen: Binding<Bool>, maxHeight: CGFloat, mapViewModel: MapViewModel) {
         self.minHeight = maxHeight * Constants.minHeightRatio
         self.maxHeight = maxHeight
+        self.mapViewModel = mapViewModel
         self._isOpen = isOpen
     }
     
@@ -128,7 +168,7 @@ struct BottomSheetView: View {
                     }
                 }
                 
-                ForEach(0..<10) { item in
+                ForEach(0..<5) { item in
                     Text("Sugestões da Siri")
                         .font(.headline)
                         .padding([.leading, .top])
@@ -159,9 +199,15 @@ struct BottomSheetView: View {
                 }
                 
                 SearchBar {
-                    TextField("Buscar no App Mapas", text: $local, onEditingChanged: { _ in
+                    TextField("Buscar no App Mapas", text: $local, onEditingChanged: { item in
                         isOpen.toggle()
+                        mapViewModel.getNearByLandmarks(location: local)
                     })
+                        .onSubmit {
+                            if !local.isEmpty {
+                                isOpen = true
+                            }
+                        }
                         .font(.headline)
                         .padding(10)
                         .overlay(
