@@ -96,7 +96,7 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
             if let location = location {
                 self.mapRegion = MKCoordinateRegion(
                     center: CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude),
-                    span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+                    span: MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001)
                 )
             } else { return }
         }

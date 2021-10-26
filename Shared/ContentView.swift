@@ -39,7 +39,10 @@ struct MapView: View {
                         }
                     BottomSheetView(isOpen: $bottomSheetShown, maxHeight: gr.size.height * 0.8) { location in
                             Button(action: {
-                                viewModel.updateMapRegion(location: location.coordinate)
+                                withAnimation(.spring()) {
+                                    viewModel.updateMapRegion(location: location.coordinate)
+                                    bottomSheetShown = false
+                                }
                             }) {
                                 VStack(alignment: .leading) {
                                     Text(location.name)
