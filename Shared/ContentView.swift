@@ -44,7 +44,7 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
         case .denied:
             print("Your have denied this app location permissions. Go into settings to change it.")
         case .authorizedAlways, .authorizedWhenInUse:
-            region = MKCoordinateRegion(center: locationManager.location!.coordinate, span:  MKCoordinateSpan(latitudeDelta: 0.5, longitudeDelta: 0.5))
+            region = MKCoordinateRegion(center: locationManager.location!.coordinate, span:  MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1))
         @unknown default:
             break
         }
@@ -54,24 +54,27 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
         checkLocationAuthorization()
     }
     
-    
-    @State static private(set) var landmarks: [Landmark] = [Landmark]()
+    @Published var landmarks: [Landmark] = [Landmark]()
     
     // get landmarks on MapKit
-    func getNearByLandmarks(location search: String) {
+    func getNearByLandmarks(location search: Binding<String>) {
         let request = MKLocalSearch.Request()
-        request.naturalLanguageQuery = search
+        request.naturalLanguageQuery = search.wrappedValue
         
         let search = MKLocalSearch(request: request)
         
         search.start { (response, error) in
             if let response = response {
                 let mapItems = response.mapItems
-                MapViewModel.landmarks = mapItems.map {
+                self.landmarks = mapItems.map {
                     Landmark(placemark: $0.placemark)
                 }
             }
         }
+    }
+    
+    func setMapRegion(location: MKCoordinateRegion) {
+        region = location
     }
 }
 
@@ -92,12 +95,12 @@ struct MapView: View {
         GeometryReader { gr in
             VStack {
                 ZStack(alignment: .bottom) {
-                    Map(coordinateRegion: $viewModel.region, showsUserLocation: true, userTrackingMode: .constant(.follow))
+                    Map(coordinateRegion: $viewModel.region, showsUserLocation: true)
                         .edgesIgnoringSafeArea(.all)
                         .onAppear {
                             viewModel.checkIfLocatioServiceIsEnabled()
                         }
-                    BottomSheetView(isOpen: $bottomSheetShown, maxHeight: gr.size.height * 0.8, mapViewModel: .init())
+                    BottomSheetView(isOpen: $bottomSheetShown, maxHeight: gr.size.height * 0.8)
                 }
             }
         }
@@ -137,48 +140,63 @@ struct BottomSheetView: View {
     @State private var endingOffsetY: CGFloat = 0
     @State private var local = ""
     
-    @ObservedObject var mapViewModel: MapViewModel
-
+    @StateObject var mapViewModel: MapViewModel = .init()
     
     let minHeight: CGFloat
     let maxHeight: CGFloat
     
-    init(isOpen: Binding<Bool>, maxHeight: CGFloat, mapViewModel: MapViewModel) {
+    init(isOpen: Binding<Bool>, maxHeight: CGFloat) {
         self.minHeight = maxHeight * Constants.minHeightRatio
         self.maxHeight = maxHeight
-        self.mapViewModel = mapViewModel
         self._isOpen = isOpen
     }
-    
     
     var otherActions: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading) {
-                VStack {
-                    ForEach(MapViewModel.landmarks, id: \.id) { item in
-                        Button(action: {}) {
-                            Text(item.name)
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .padding(.leading, 25)
-                                .padding(5)
-                                .foregroundColor(.secondary)
-
+                
+                ForEach(mapViewModel.landmarks, id: \.id) { location in
+                    Button(action: {
+                        DispatchQueue.main.async {
+                            mapViewModel.setMapRegion(location: MKCoordinateRegion(
+                                center:
+                                    CLLocationCoordinate2D(
+                                        latitude: location.coordinate.latitude,
+                                        longitude: location.coordinate.longitude
+                                    ),
+                                span:
+                                    MKCoordinateSpan(
+                                        latitudeDelta: 0.5,
+                                        longitudeDelta: 0.5
+                                    )
+                            ))
                         }
+                    
+                    }) {
+                        VStack(alignment: .leading) {
+                            Text(location.name)
+                                .font(.headline)
+                                .multilineTextAlignment(.leading)
+                                .foregroundColor(.primary)
+                            Text(location.title)
+                                .font(.subheadline)
+                                .multilineTextAlignment(.leading)
+                                .foregroundColor(.secondary)
+                        }.padding()
                     }
                 }
                 
-                ForEach(0..<5) { item in
-                    Text("Sugestões da Siri")
-                        .font(.headline)
-                        .padding([.leading, .top])
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
-                            ObjectContainer(title: "Carro Estacionado", subtitle: "9,5 km de distancia, perto de Rodovia...", icon: "car.circle.fill")
-                            ObjectContainer(title: "Super Mercado", subtitle: "2,8 km de distancia, perto de Rodovia...", icon: "cart.circle.fill")
-                        }
+                
+                Text("Sugestões da Siri")
+                    .font(.headline)
+                    .padding([.leading, .top])
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack {
+                        ObjectContainer(title: "Carro Estacionado", subtitle: "9,5 km de distancia, perto de Rodovia...", icon: "car.circle.fill")
+                        ObjectContainer(title: "Super Mercado", subtitle: "2,8 km de distancia, perto de Rodovia...", icon: "cart.circle.fill")
                     }
                 }
+                
                
                 Text("Favoritos")
                     .font(.headline)
@@ -200,12 +218,15 @@ struct BottomSheetView: View {
                 
                 SearchBar {
                     TextField("Buscar no App Mapas", text: $local, onEditingChanged: { item in
-                        isOpen.toggle()
-                        mapViewModel.getNearByLandmarks(location: local)
-                    })
-                        .onSubmit {
+                        if isOpen == false {
+                            isOpen.toggle()
+                        }
+                        mapViewModel.getNearByLandmarks(location: $local)
+                    }).onSubmit {
                             if !local.isEmpty {
                                 isOpen = true
+                            } else {
+                                isOpen = false
                             }
                         }
                         .font(.headline)
@@ -229,7 +250,7 @@ struct BottomSheetView: View {
             }
             .frame(height: isOpen ? self.maxHeight : 80)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-            .cornerRadius(20)
+            .cornerRadius(15)
             .padding(10)
             .offset(y: startingOffsetY)
             .offset(y: currentDragOffsetY)
