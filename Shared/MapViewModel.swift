@@ -26,9 +26,9 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
             MapDetails.startingLocation,
         span:
             MapDetails.defaultSpan
-            
     )
     
+    // check localization is authorized 
     func checkIfLocatioServiceIsEnabled() {
         if CLLocationManager.locationServicesEnabled() {
             locationManager = CLLocationManager()
@@ -39,6 +39,7 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
         }
     }
     
+    // case CoreLocation not working
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         locations.last.map {
             mapRegion = MKCoordinateRegion(

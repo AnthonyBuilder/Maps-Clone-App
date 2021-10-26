@@ -22,11 +22,27 @@ struct MapView: View {
     
     @StateObject private var viewModel = MapViewModel()
     @State private var bottomSheetShown = false
+    
+    @State private var name = ""
+    @State private var title = ""
+    
+    let spacerHeight: CGFloat = 50
+
+    var titleMarkLocation: some View {
+        VStack(alignment: .leading) {
+            Text(name)
+                .font(.title2)
+                .bold()
+                
+            Text(title)
+                .font(.body)
+        }
+    }
 
     var body: some View {
         GeometryReader { gr in
             VStack {
-                ZStack(alignment: .bottom) {
+                ZStack {
                     Map(coordinateRegion: $viewModel.mapRegion, interactionModes: .all, showsUserLocation: true)
                         .edgesIgnoringSafeArea(.all)
                         .onAppear {
@@ -37,23 +53,44 @@ struct MapView: View {
                                 bottomSheetShown = false
                             }
                         }
-                    BottomSheetView(isOpen: $bottomSheetShown, maxHeight: gr.size.height * 0.8) { location in
-                            Button(action: {
-                                withAnimation(.spring()) {
-                                    viewModel.updateMapRegion(location: location.coordinate)
-                                    bottomSheetShown = false
+                    
+                    VStack {
+                        if bottomSheetShown == false && name.isEmpty == false {
+                            if #available(iOS 15.0, *) {
+                                withAnimation(.easeInOut) {
+                                    titleMarkLocation
+                                        .padding()
+                                        .frame(minWidth: 125, maxWidth: 350)
+                                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
                                 }
-                            }) {
-                                VStack(alignment: .leading) {
-                                    Text(location.name)
-                                        .font(.headline)
-                                        .multilineTextAlignment(.leading)
-                                        .foregroundColor(.primary)
-                                    Text(location.title)
-                                        .font(.subheadline)
-                                        .multilineTextAlignment(.leading)
-                                        .foregroundColor(.secondary)
-                                }.padding()
+                            } else {
+                                // Fallback on earlier versions
+                            }
+                        }
+                    
+                        
+                        Spacer(minLength: spacerHeight)
+                    
+                        BottomSheetView(isOpen: $bottomSheetShown, maxHeight: gr.size.height * 0.8) { location in
+                                Button(action: {
+                                    withAnimation(.spring()) {
+                                        viewModel.updateMapRegion(location: location.coordinate)
+                                        title = location.title
+                                        name = location.name
+                                        bottomSheetShown = false
+                                    }
+                                }) {
+                                    VStack(alignment: .leading) {
+                                        Text(location.name)
+                                            .font(.headline)
+                                            .multilineTextAlignment(.leading)
+                                            .foregroundColor(.primary)
+                                        Text(location.title)
+                                            .font(.subheadline)
+                                            .multilineTextAlignment(.leading)
+                                            .foregroundColor(.secondary)
+                                    }.padding()
+                                }
                             }
                         }
                     }
@@ -151,18 +188,6 @@ struct BottomSheetView<Content: View>: View {
         }
     }
 
-    @State private var name = ""
-    @State private var title = ""
-    
-    var titleMarkLocation: some View {
-        VStack(alignment: .leading) {
-            Text(name)
-                .font(.title)
-            Text(title)
-                .font(.body)
-        }
-    }
-    
     func showResultsSearchLocations() {
         if local.isEmpty {
             mapViewModel.landmarks.removeAll()
