@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		86C156A42728702500270BDA /* MapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C156A32728702500270BDA /* MapViewModel.swift */; };
+		86C156A52728702500270BDA /* MapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C156A32728702500270BDA /* MapViewModel.swift */; };
 		86CF38FA271EFF20004690ED /* Tests_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86CF38F9271EFF20004690ED /* Tests_iOS.swift */; };
 		86CF38FC271EFF20004690ED /* Tests_iOSLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86CF38FB271EFF20004690ED /* Tests_iOSLaunchTests.swift */; };
 		86CF3906271EFF20004690ED /* Tests_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86CF3905271EFF20004690ED /* Tests_macOS.swift */; };
@@ -40,6 +42,7 @@
 
 /* Begin PBXFileReference section */
 		8652ED392727343B007CAB33 /* maps--iOS--Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "maps--iOS--Info.plist"; sourceTree = "<group>"; };
+		86C156A32728702500270BDA /* MapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewModel.swift; sourceTree = "<group>"; };
 		86CF38E1271EFF18004690ED /* mapsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mapsApp.swift; sourceTree = "<group>"; };
 		86CF38E2271EFF18004690ED /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		86CF38E3271EFF20004690ED /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -106,6 +109,7 @@
 				86CF38E2271EFF18004690ED /* ContentView.swift */,
 				86CF38E3271EFF20004690ED /* Assets.xcassets */,
 				86F17A5E272223EE00F7E2A4 /* Landmark.swift */,
+				86C156A32728702500270BDA /* MapViewModel.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -308,6 +312,7 @@
 				86CF390B271EFF20004690ED /* ContentView.swift in Sources */,
 				86CF3909271EFF20004690ED /* mapsApp.swift in Sources */,
 				86F17A5F272223EE00F7E2A4 /* Landmark.swift in Sources */,
+				86C156A42728702500270BDA /* MapViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -318,6 +323,7 @@
 				86CF390C271EFF20004690ED /* ContentView.swift in Sources */,
 				86CF390A271EFF20004690ED /* mapsApp.swift in Sources */,
 				86F17A60272223EE00F7E2A4 /* Landmark.swift in Sources */,
+				86C156A52728702500270BDA /* MapViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

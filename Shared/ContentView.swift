@@ -6,76 +6,9 @@
 //
 import SwiftUI
 import MapKit
-import CoreLocation
-
 
 fileprivate enum Constants {
     static let minHeightRatio: CGFloat = 0.3
-}
-
-// MapViewModel
-final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
-    
-    var locationManager: CLLocationManager?
-    
-    @Published var region = MKCoordinateRegion(center:
-                                                    CLLocationCoordinate2D(latitude: 51.507222, longitude: -0.1275),
-                                                span:
-                                                    MKCoordinateSpan(latitudeDelta: 0.5, longitudeDelta: 0.5))
-    
-    func checkIfLocatioServiceIsEnabled() {
-        if CLLocationManager.locationServicesEnabled() {
-            locationManager = CLLocationManager()
-            locationManager!.delegate = self
-            checkLocationAuthorization()
-        } else {
-            print("Show an alert letting them know this is off and to go turn it on.")
-        }
-    }
-    
-    private func checkLocationAuthorization() {
-        guard let locationManager = locationManager else { return }
-        
-        switch locationManager.authorizationStatus {
-        case .notDetermined:
-            locationManager.requestWhenInUseAuthorization()
-        case .restricted:
-            print("Your location is restricted likely due to parental constrols.")
-        case .denied:
-            print("Your have denied this app location permissions. Go into settings to change it.")
-        case .authorizedAlways, .authorizedWhenInUse:
-            region = MKCoordinateRegion(center: locationManager.location!.coordinate, span:  MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1))
-        @unknown default:
-            break
-        }
-    }
-    
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        checkLocationAuthorization()
-    }
-    
-    @Published var landmarks: [Landmark] = [Landmark]()
-    
-    // get landmarks on MapKit
-    func getNearByLandmarks(location search: Binding<String>) {
-        let request = MKLocalSearch.Request()
-        request.naturalLanguageQuery = search.wrappedValue
-        
-        let search = MKLocalSearch(request: request)
-        
-        search.start { (response, error) in
-            if let response = response {
-                let mapItems = response.mapItems
-                self.landmarks = mapItems.map {
-                    Landmark(placemark: $0.placemark)
-                }
-            }
-        }
-    }
-    
-    func setMapRegion(location: MKCoordinateRegion) {
-        region = location
-    }
 }
 
 struct ContentView: View {
@@ -83,7 +16,6 @@ struct ContentView: View {
         MapView()
     }
 }
-
 
 // Main map View
 struct MapView: View {
@@ -95,24 +27,45 @@ struct MapView: View {
         GeometryReader { gr in
             VStack {
                 ZStack(alignment: .bottom) {
-                    Map(coordinateRegion: $viewModel.region, showsUserLocation: true)
+                    Map(coordinateRegion: $viewModel.mapRegion, interactionModes: .all, showsUserLocation: true)
                         .edgesIgnoringSafeArea(.all)
                         .onAppear {
                             viewModel.checkIfLocatioServiceIsEnabled()
                         }
-                    BottomSheetView(isOpen: $bottomSheetShown, maxHeight: gr.size.height * 0.8)
+                        .onTapGesture {
+                            withAnimation(.spring()) {
+                                bottomSheetShown = false
+                            }
+                        }
+                    BottomSheetView(isOpen: $bottomSheetShown, maxHeight: gr.size.height * 0.8) { location in
+                            Button(action: {
+                                viewModel.updateMapRegion(location: location.coordinate)
+                            }) {
+                                VStack(alignment: .leading) {
+                                    Text(location.name)
+                                        .font(.headline)
+                                        .multilineTextAlignment(.leading)
+                                        .foregroundColor(.primary)
+                                    Text(location.title)
+                                        .font(.subheadline)
+                                        .multilineTextAlignment(.leading)
+                                        .foregroundColor(.secondary)
+                                }.padding()
+                            }
+                        }
+                    }
                 }
             }
         }
     }
-}
+
 
 // SearchBar
 struct SearchBar<Content: View>: View {
     
     let content: Content
     
-    init (@ViewBuilder content: () -> Content) {
+    init (@ViewBuilder content: @escaping () -> Content) {
         self.content = content()
     }
 
@@ -131,7 +84,7 @@ struct SearchBar<Content: View>: View {
 }
 
 // Bottom-Bar contents
-struct BottomSheetView: View {
+struct BottomSheetView<Content: View>: View {
     
     @Binding var isOpen: Bool
     
@@ -140,14 +93,17 @@ struct BottomSheetView: View {
     @State private var endingOffsetY: CGFloat = 0
     @State private var local = ""
     
+    let content: (Landmark) -> Content
+    
     @StateObject var mapViewModel: MapViewModel = .init()
     
     let minHeight: CGFloat
     let maxHeight: CGFloat
     
-    init(isOpen: Binding<Bool>, maxHeight: CGFloat) {
+    init(isOpen: Binding<Bool>, maxHeight: CGFloat, @ViewBuilder content: @escaping (Landmark) -> Content) {
         self.minHeight = maxHeight * Constants.minHeightRatio
         self.maxHeight = maxHeight
+        self.content = content
         self._isOpen = isOpen
     }
     
@@ -155,45 +111,27 @@ struct BottomSheetView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading) {
                 
-                ForEach(mapViewModel.landmarks, id: \.id) { location in
-                    Button(action: {
-                        DispatchQueue.main.async {
-                            mapViewModel.setMapRegion(location: MKCoordinateRegion(
-                                center:
-                                    CLLocationCoordinate2D(
-                                        latitude: location.coordinate.latitude,
-                                        longitude: location.coordinate.longitude
-                                    ),
-                                span:
-                                    MKCoordinateSpan(
-                                        latitudeDelta: 0.5,
-                                        longitudeDelta: 0.5
-                                    )
-                            ))
-                        }
-                    
-                    }) {
-                        VStack(alignment: .leading) {
-                            Text(location.name)
-                                .font(.headline)
-                                .multilineTextAlignment(.leading)
-                                .foregroundColor(.primary)
-                            Text(location.title)
-                                .font(.subheadline)
-                                .multilineTextAlignment(.leading)
-                                .foregroundColor(.secondary)
-                        }.padding()
+                if isOpen == true {
+                    ForEach(mapViewModel.landmarks, id: \.id) { location in
+                        content(location)
                     }
                 }
-                
                 
                 Text("Sugestões da Siri")
                     .font(.headline)
                     .padding([.leading, .top])
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
-                        ObjectContainer(title: "Carro Estacionado", subtitle: "9,5 km de distancia, perto de Rodovia...", icon: "car.circle.fill")
-                        ObjectContainer(title: "Super Mercado", subtitle: "2,8 km de distancia, perto de Rodovia...", icon: "cart.circle.fill")
+                        ObjectContainer(
+                            title: "Carro Estacionado",
+                            subtitle: "9,5 km de distancia, perto de Rodovia...",
+                            icon: "car.circle.fill"
+                        )
+                        ObjectContainer(
+                            title: "Super Mercado",
+                            subtitle: "2,8 km de distancia, perto de Rodovia...",
+                            icon: "cart.circle.fill"
+                        )
                     }
                 }
                 
@@ -201,8 +139,33 @@ struct BottomSheetView: View {
                 Text("Favoritos")
                     .font(.headline)
                     .padding([.leading, .top])
-                ObjectContainer(title: "Casa", subtitle: "15 km de distância", icon: "house.circle.fill")
+                
+                ObjectContainer(
+                    title: "Casa",
+                    subtitle: "15 km de distância",
+                    icon: "house.circle.fill"
+                )
             }.frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    @State private var name = ""
+    @State private var title = ""
+    
+    var titleMarkLocation: some View {
+        VStack(alignment: .leading) {
+            Text(name)
+                .font(.title)
+            Text(title)
+                .font(.body)
+        }
+    }
+    
+    func showResultsSearchLocations() {
+        if local.isEmpty {
+            mapViewModel.landmarks.removeAll()
+        } else  {
+            mapViewModel.getNearByLandmarks(location: $local)
         }
     }
     
@@ -217,35 +180,41 @@ struct BottomSheetView: View {
                 }
                 
                 SearchBar {
-                    TextField("Buscar no App Mapas", text: $local, onEditingChanged: { item in
+                    TextField("Buscar no App Mapas", text: $local, onEditingChanged: { _ in
+                        if isOpen {
+                            showResultsSearchLocations()
+                        }
+                    }).onTapGesture {
+                        isOpen = true
+                    }
+                    .onSubmit {
                         if isOpen == false {
-                            isOpen.toggle()
+                            isOpen = true
+                            showResultsSearchLocations()
+                        } else if local.isEmpty && isOpen == true {
+                            isOpen = false
                         }
-                        mapViewModel.getNearByLandmarks(location: $local)
-                    }).onSubmit {
-                            if !local.isEmpty {
-                                isOpen = true
-                            } else {
-                                isOpen = false
-                            }
-                        }
-                        .font(.headline)
-                        .padding(10)
-                        .overlay(
-                            withAnimation {
-                                Image(systemName: "xmark.circle.fill")
-                                    .padding()
-                                    .font(.body)
-                                    .opacity(local.isEmpty ? 0.0 : 1.0)
-                                    .onTapGesture {
-                                        local = ""
-                                    }
-                            }, alignment: .trailing
-                        )
+                    }
+                    .font(.headline)
+                    .padding(10)
+                    .overlay(
+                        withAnimation {
+                            Image(systemName: "xmark.circle.fill")
+                                .padding()
+                                .font(.body)
+                                .opacity(local.isEmpty ? 0.0 : 1.0)
+                                .onTapGesture {
+                                    local = ""
+                                }
+                        }, alignment: .trailing
+                    )
                 }.padding([.leading, .bottom, .trailing])
                 
                 if isOpen == true {
                     otherActions
+                } else {
+                    // fix bogus!
+                    // titleMarkLocation
                 }
             }
             .frame(height: isOpen ? self.maxHeight : 80)
