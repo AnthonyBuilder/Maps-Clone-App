@@ -137,7 +137,6 @@ struct BottomSheetView<Content: View>: View {
                         )
                     }
                 }
-                
                
                 Text("Favoritos")
                     .font(.headline)
@@ -188,7 +187,9 @@ struct BottomSheetView<Content: View>: View {
                             showResultsSearchLocations()
                         }
                     }).onTapGesture {
-                        isOpen = true
+                        if isOpen == false {
+                            isOpen.toggle()
+                        }
                     }
                     .onSubmit {
                         if isOpen == false {
@@ -208,6 +209,7 @@ struct BottomSheetView<Content: View>: View {
                                 .opacity(local.isEmpty ? 0.0 : 1.0)
                                 .onTapGesture {
                                     local = ""
+                                    isOpen = false
                                 }
                         }, alignment: .trailing
                     )
@@ -240,7 +242,7 @@ struct BottomSheetView<Content: View>: View {
                                 isOpen = true
                                 endingOffsetY = -startingOffsetY
                                 currentDragOffsetY = 0
-                            } else if endingOffsetY != 0 && currentDragOffsetY > 150 {
+                            } else if endingOffsetY != 0 && currentDragOffsetY > 200 {
                                 isOpen = false
                                 endingOffsetY = 0
                                 currentDragOffsetY = 0
