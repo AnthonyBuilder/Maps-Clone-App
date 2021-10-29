@@ -17,33 +17,66 @@ struct ContentView: View {
     }
 }
 
+struct MapLocation: Identifiable {
+    let id = UUID()
+    let name: String
+    let latitude: Double
+    let longitude: Double
+    var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+}
+
 // Main map View
 struct MapView: View {
     
-    @StateObject private var viewModel = MapViewModel()
+    @StateObject private var viewModel = MapViewModel()    
     @State private var bottomSheetShown = false
     
     @State private var name = ""
     @State private var title = ""
     
     let spacerHeight: CGFloat = 50
-
-    var titleMarkLocation: some View {
-        VStack(alignment: .leading) {
-            Text(name)
-                .font(.title2)
-                .bold()
-                
-            Text(title)
-                .font(.body)
+    
+    let MapLocations = [
+        MapLocation(name: "St Francis Memorial Hospital", latitude: 37.789467, longitude: -122.416772),
+        MapLocation(name: "The Ritz-Carlton, San Francisco", latitude: 37.791965, longitude: -122.406903),
+        MapLocation(name: "Honey Honey Cafe & Crepery", latitude: 37.787891, longitude: -122.411223)
+    ]
+    
+    var LocationDescription: some View {
+        VStack {
+            HStack {
+                VStack {
+                    Text(name)
+                        .font(.title3)
+                        .bold()
+                    Text(title)
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                }
+            }
         }
+    }
+    
+    func moveToLocation(to location: Landmark) {
+        viewModel.updateMapRegion(location: location.coordinate)
+        title = location.title
+        name = location.name
+        bottomSheetShown = false
     }
 
     var body: some View {
         GeometryReader { gr in
             VStack {
                 ZStack {
-                    Map(coordinateRegion: $viewModel.mapRegion, interactionModes: .all, showsUserLocation: true)
+                    Map(coordinateRegion: $viewModel.mapRegion,
+                        interactionModes: MapInteractionModes.all,
+                        showsUserLocation: true,
+                        annotationItems: MapLocations,
+                        annotationContent: { location in
+                        MapPin(coordinate: location.coordinate, tint: .red)
+                    })
                         .edgesIgnoringSafeArea(.all)
                         .onAppear {
                             viewModel.checkIfLocatioServiceIsEnabled()
@@ -58,39 +91,33 @@ struct MapView: View {
                         if bottomSheetShown == false && name.isEmpty == false {
                             if #available(iOS 15.0, *) {
                                 withAnimation(.easeInOut) {
-                                    titleMarkLocation
-                                        .padding()
-                                        .frame(minWidth: 125, maxWidth: 350)
+                                    LocationDescription
+                                        .padding(10)
                                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
                                 }
                             } else {
                                 // Fallback on earlier versions
                             }
                         }
-                    
                         
                         Spacer(minLength: spacerHeight)
-                    
+
                         BottomSheetView(isOpen: $bottomSheetShown, maxHeight: gr.size.height * 0.8) { location in
-                                Button(action: {
-                                    withAnimation(.spring()) {
-                                        viewModel.updateMapRegion(location: location.coordinate)
-                                        title = location.title
-                                        name = location.name
-                                        bottomSheetShown = false
-                                    }
-                                }) {
-                                    VStack(alignment: .leading) {
-                                        Text(location.name)
-                                            .font(.headline)
-                                            .multilineTextAlignment(.leading)
-                                            .foregroundColor(.primary)
-                                        Text(location.title)
-                                            .font(.subheadline)
-                                            .multilineTextAlignment(.leading)
-                                            .foregroundColor(.secondary)
-                                    }.padding()
+                            Button(action: {
+                                withAnimation(.spring()) {
+                                    moveToLocation(to: location)
                                 }
+                            }) {
+                                VStack(alignment: .leading) {
+                                    Text(location.name)
+                                        .font(.headline)
+                                        .multilineTextAlignment(.leading)
+                                        .foregroundColor(.primary)
+                                    Text(location.title)
+                                        .font(.subheadline)
+                                        .multilineTextAlignment(.leading)
+                                        .foregroundColor(.secondary)
+                                }.padding()
                             }
                         }
                     }
@@ -98,6 +125,7 @@ struct MapView: View {
             }
         }
     }
+}
 
 
 // SearchBar
@@ -108,7 +136,7 @@ struct SearchBar<Content: View>: View {
     init (@ViewBuilder content: @escaping () -> Content) {
         self.content = content()
     }
-
+    
     var body: some View {
         HStack {
             Image(systemName: "magnifyingglass")
@@ -160,6 +188,7 @@ struct BottomSheetView<Content: View>: View {
                 Text("Sugestões da Siri")
                     .font(.headline)
                     .padding([.leading, .top])
+                
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
                         ObjectContainer(
@@ -174,7 +203,7 @@ struct BottomSheetView<Content: View>: View {
                         )
                     }
                 }
-               
+                
                 Text("Favoritos")
                     .font(.headline)
                     .padding([.leading, .top])
@@ -187,7 +216,7 @@ struct BottomSheetView<Content: View>: View {
             }.frame(maxWidth: .infinity, alignment: .leading)
         }
     }
-
+    
     func showResultsSearchLocations() {
         if local.isEmpty {
             mapViewModel.landmarks.removeAll()
@@ -210,18 +239,15 @@ struct BottomSheetView<Content: View>: View {
                     TextField("Buscar no App Mapas", text: $local, onEditingChanged: { _ in
                         if isOpen {
                             showResultsSearchLocations()
-                        }
-                    }).onTapGesture {
-                        if isOpen == false {
-                            isOpen.toggle()
-                        }
-                    }
-                    .onSubmit {
-                        if isOpen == false {
+                        } else if isOpen == false {
                             isOpen = true
                             showResultsSearchLocations()
                         } else if local.isEmpty && isOpen == true {
                             isOpen = false
+                        }
+                    }).onTapGesture {
+                        if isOpen == false {
+                            isOpen.toggle()
                         }
                     }
                     .font(.headline)
@@ -283,30 +309,8 @@ struct BottomSheetView<Content: View>: View {
     }
 }
 
-// exemple car station of Siri recomend
-struct ObjectContainer: View {
-    var title = ""
-    var subtitle = ""
-    var icon = ""
 
-    var body: some View {
-        VStack {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(.blue)
-                    .font(.title)
-                VStack(alignment: .leading) {
-                    Text(title)
-                        .font(.headline)
-                    Text(subtitle)
-                        .font(.subheadline)
-                }
-            }.padding(10)
-            .background(Color("BackgroundComponents").opacity(0.5))
-            .cornerRadius(15)
-        }.padding(.leading, 10)
-    }
-}
+
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {

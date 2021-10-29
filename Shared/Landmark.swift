@@ -28,3 +28,5 @@ struct Landmark {
         self.placemark.coordinate
     }
 }
+
+

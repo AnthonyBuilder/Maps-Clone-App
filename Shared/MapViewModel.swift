@@ -20,6 +20,7 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
     var locationManager: CLLocationManager?
     var hasSetRegion = false
     
+    @Published var landmarks: [Landmark] = [Landmark]()
     @Published var location: CLLocation?
     @Published var mapRegion = MKCoordinateRegion(
         center:
@@ -58,7 +59,7 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
         case .restricted:
             print("Your location is restricted likely due to parental constrols.")
         case .denied:
-            print("Your have denied this app location permissions. Go into settings to change it.")
+            print(" ")
         case .authorizedAlways, .authorizedWhenInUse:
             mapRegion = MKCoordinateRegion(
                 center: locationManager.location!.coordinate,
@@ -73,8 +74,7 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
         checkLocationAuthorization()
     }
     
-    @Published var landmarks: [Landmark] = [Landmark]()
-    
+   
     // get landmarks on MapKit
     func getNearByLandmarks(location search: Binding<String>) {
         let request = MKLocalSearch.Request()
@@ -97,9 +97,32 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
             if let location = location {
                 self.mapRegion = MKCoordinateRegion(
                     center: CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude),
-                    span: MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001)
+                    span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
                 )
-            } else { return }
+            }
         }
     }
 }
+
+extension MKPointAnnotation {
+    static var example: MKPointAnnotation {
+        let annotation = MKPointAnnotation()
+        annotation.title = "London"
+        annotation.subtitle = "Home to the 2012 Summer Olympics."
+        annotation.coordinate = CLLocationCoordinate2D(latitude: 51.5, longitude: -0.13)
+        return annotation
+    }
+}
+
+//    struct Product {
+//        let category: Category
+//        let description: Description
+//    }
+//
+//    extension Product {
+//        struct Category {}
+//        struct Description {}
+//    }
+//
+//    let category = Product.Category()
+//    let description = Product.Description()
