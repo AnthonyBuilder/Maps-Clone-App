@@ -23,13 +23,11 @@ struct ObjectContainer: View {
             HStack {
                 Image(systemName: icon)
                     .foregroundColor(.blue)
-                    .font(.title)
-                VStack(alignment: .leading) {
-                    Text(title)
-                        .font(.headline)
-                    Text(subtitle)
-                        .font(.subheadline)
-                }
+                    .font(.title3)
+                Text(title)
+                    .font(.headline)
+                Text(subtitle)
+                    .font(.subheadline)
             }.padding(10)
                 .background(Color("BackgroundComponents").opacity(0.5))
                 .cornerRadius(15)
