@@ -19,19 +19,23 @@ struct ObjectContainer: View {
     var icon = ""
     
     var body: some View {
-        VStack {
+        VStack(alignment: .leading) {
             HStack {
                 Image(systemName: icon)
                     .foregroundColor(.blue)
-                    .font(.title3)
-                Text(title)
-                    .font(.headline)
-                Text(subtitle)
-                    .font(.subheadline)
-            }.padding(10)
+                    .font(.title)
+                Spacer()
+                VStack(alignment: .leading) {
+                    Text(title)
+                        .font(.headline)
+                    Text(subtitle)
+                        .font(.subheadline)
+                }
+            }.frame(maxWidth: .infinity)
+                .padding(10)
                 .background(Color("BackgroundComponents").opacity(0.5))
                 .cornerRadius(15)
-        }.padding(.leading, 10)
+        }.padding(10)
     }
 }
 

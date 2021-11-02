@@ -19,10 +19,10 @@ struct BottomSheetView<Content: View>: View {
     
     @State private var startingOffsetY: CGFloat = UIScreen.main.bounds.height * 0.03
     @State private var currentDragOffsetY: CGFloat = 0
-    @State private var endingOffsetY: CGFloat = 0
+    @State private var endingOffsetY: CGFloat = 3.00
     @State private var local = ""
     
-    let content: (Landmark) -> Content
+    private let content: (Landmark) -> Content
     
     @StateObject var mapViewModel: MapViewModel = .init()
     
@@ -39,7 +39,6 @@ struct BottomSheetView<Content: View>: View {
     var otherActions: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading) {
-                
                 if isOpen == true {
                     ForEach(mapViewModel.landmarks, id: \.id) { location in
                         content(location)
@@ -50,23 +49,16 @@ struct BottomSheetView<Content: View>: View {
                     .font(.headline)
                     .padding([.leading, .top])
                 
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack {
-                        ForEach(mapViewModel.MapLocations) { saveLocations in
-                            ObjectContainer(title: saveLocations.name, subtitle: saveLocations.country, icon: "heart.circle.fill")
-                        }
+                
+                VStack(alignment: .leading) {
+                    ForEach(mapViewModel.MapLocations) { saveLocations in
+                        ObjectContainer(title: saveLocations.name, subtitle: saveLocations.country, icon: "heart.circle.fill")
+                            .onTapGesture {
+                                mapViewModel.updateMapRegion(location: saveLocations.coordinate)
+                            }
                     }
                 }
                 
-                Text("Favoritos")
-                    .font(.headline)
-                    .padding([.leading, .top])
-                
-                ObjectContainer(
-                    title: "Casa",
-                    subtitle: "15 km de distância",
-                    icon: "house.circle.fill"
-                )
             }.frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -101,7 +93,7 @@ struct BottomSheetView<Content: View>: View {
                         }
                     }).onTapGesture {
                         if isOpen == false {
-                            isOpen.toggle()
+                            isOpen = true
                         }
                     }
                     .font(.headline)
@@ -127,10 +119,10 @@ struct BottomSheetView<Content: View>: View {
                     // titleMarkLocation
                 }
             }
-            .frame(height: isOpen ? self.maxHeight : 80)
+            .frame(height: isOpen ? self.maxHeight : 75)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-            .cornerRadius(15)
-            .padding(10)
+            .cornerRadius(20)
+            .padding()
             .offset(y: startingOffsetY)
             .offset(y: currentDragOffsetY)
             .offset(y: endingOffsetY)
@@ -147,7 +139,7 @@ struct BottomSheetView<Content: View>: View {
                                 isOpen = true
                                 endingOffsetY = -startingOffsetY
                                 currentDragOffsetY = 0
-                            } else if endingOffsetY != 0 && currentDragOffsetY > 200 {
+                            } else if endingOffsetY != 0 && currentDragOffsetY > 150 {
                                 isOpen = false
                                 endingOffsetY = 0
                                 currentDragOffsetY = 0
