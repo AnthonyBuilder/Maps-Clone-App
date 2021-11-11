@@ -25,7 +25,7 @@ struct SearchBar<Content: View>: View {
             }
         }
         .background(Color("BackgroundComponents").opacity(0.5))
-        .cornerRadius(15)
+        .cornerRadius(.infinity)
         .shadow(color: .black.opacity(0.2), radius: 5, y: 5)
     }
 }

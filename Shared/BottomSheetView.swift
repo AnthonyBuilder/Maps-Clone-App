@@ -16,8 +16,9 @@ fileprivate enum Constants {
 struct BottomSheetView<Content: View>: View {
     
     @Binding var isOpen: Bool
+    @Binding var isShowLocationPlacemark: Bool
     
-    @State private var startingOffsetY: CGFloat = UIScreen.main.bounds.height * 0.03
+    @State private var startingOffsetY: CGFloat = UIScreen.main.bounds.height * 0.40
     @State private var currentDragOffsetY: CGFloat = 0
     @State private var endingOffsetY: CGFloat = 3.00
     @State private var local = ""
@@ -29,11 +30,12 @@ struct BottomSheetView<Content: View>: View {
     let minHeight: CGFloat
     let maxHeight: CGFloat
     
-    init(isOpen: Binding<Bool>, maxHeight: CGFloat, @ViewBuilder content: @escaping (Landmark) -> Content) {
+    init(isOpen: Binding<Bool>, isShowLocationPlacemark: Binding<Bool>, maxHeight: CGFloat, @ViewBuilder content: @escaping (Landmark) -> Content) {
         self.minHeight = maxHeight * Constants.minHeightRatio
         self.maxHeight = maxHeight
         self.content = content
         self._isOpen = isOpen
+        self._isShowLocationPlacemark = isShowLocationPlacemark
     }
     
     var otherActions: some View {
@@ -44,24 +46,10 @@ struct BottomSheetView<Content: View>: View {
                         content(location)
                     }
                 }
-                
-                Text("Favoritos")
-                    .font(.headline)
-                    .padding([.leading, .top])
-                
-                
-                VStack(alignment: .leading) {
-                    ForEach(mapViewModel.MapLocations) { saveLocations in
-                        ObjectContainer(title: saveLocations.name, subtitle: saveLocations.country, icon: "heart.circle.fill")
-                            .onTapGesture {
-                                mapViewModel.updateMapRegion(location: saveLocations.coordinate)
-                            }
-                    }
-                }
-                
             }.frame(maxWidth: .infinity, alignment: .leading)
         }
     }
+    
     
     func showResultsSearchLocations() {
         if local.isEmpty {
@@ -71,7 +59,10 @@ struct BottomSheetView<Content: View>: View {
         }
     }
     
+    
+    //  MARK: Body - View
     var body: some View {
+        
         if #available(iOS 15.0, *) {
             VStack {
                 VStack(alignment: .center) {
@@ -81,36 +72,60 @@ struct BottomSheetView<Content: View>: View {
                         .padding(5)
                 }
                 
-                SearchBar {
-                    TextField("Buscar no App Mapas", text: $local, onEditingChanged: { _ in
-                        if isOpen {
-                            showResultsSearchLocations()
-                        } else if isOpen == false {
-                            isOpen = true
-                            showResultsSearchLocations()
-                        } else if local.isEmpty && isOpen == true {
-                            isOpen = false
-                        }
-                    }).onTapGesture {
-                        if isOpen == false {
-                            isOpen = true
+                if isShowLocationPlacemark == false {
+                    SearchBar {
+                        TextField("Buscar no App Mapas", text: $local, onEditingChanged: { _ in
+                            if isOpen {
+                                showResultsSearchLocations()
+                            } else if isOpen == false {
+                                isOpen = true
+                                showResultsSearchLocations()
+                            } else if local.isEmpty && isOpen == true {
+                                isOpen = false
+                            }
+                        })
+                            .onSubmit {
+                                if local.isEmpty == true {
+                                    isOpen = false
+                                } else {
+                                    isOpen = true
+                                    showResultsSearchLocations()
+                                }
+                            }
+                            .onTapGesture {
+                                if isOpen == false {
+                                    isOpen = true
+                                }
+                            }
+                            .font(.headline)
+                            .padding(10)
+                            .overlay(
+                                withAnimation {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .padding()
+                                        .font(.body)
+                                        .opacity(local.isEmpty ? 0.0 : 1.0)
+                                        .onTapGesture {
+                                            local = ""
+                                            isOpen = false
+                                        }
+                                }, alignment: .trailing
+                            )
+                    }.padding([.horizontal, .bottom])
+                } else {
+                    VStack {
+                        HStack {
+                            VStack {
+                                Text("name")
+                                    .font(.title3)
+                                    .bold()
+                                Text("title")
+                                    .font(.body)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
-                    .font(.headline)
-                    .padding(10)
-                    .overlay(
-                        withAnimation {
-                            Image(systemName: "xmark.circle.fill")
-                                .padding()
-                                .font(.body)
-                                .opacity(local.isEmpty ? 0.0 : 1.0)
-                                .onTapGesture {
-                                    local = ""
-                                    isOpen = false
-                                }
-                        }, alignment: .trailing
-                    )
-                }.padding([.leading, .bottom, .trailing])
+                }
                 
                 if isOpen == true {
                     otherActions
@@ -122,7 +137,7 @@ struct BottomSheetView<Content: View>: View {
             .frame(height: isOpen ? self.maxHeight : 75)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
             .cornerRadius(20)
-            .padding()
+            
             .offset(y: startingOffsetY)
             .offset(y: currentDragOffsetY)
             .offset(y: endingOffsetY)
@@ -154,3 +169,5 @@ struct BottomSheetView<Content: View>: View {
         }
     }
 }
+
+

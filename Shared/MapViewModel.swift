@@ -29,6 +29,14 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
             MapDetails.defaultSpan
     )
     
+    @Published var initialPoint: MKPlacemark = MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: 40.71, longitude: -74))
+    @Published var finishPoint: MKPlacemark = MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: 42.36, longitude: -71.05))
+    
+    func setRouteOnMap(firstPoint: MKPlacemark, finalPoint: MKPlacemark) {
+        initialPoint = firstPoint
+        finishPoint = finalPoint
+    }
+    
     let MapLocations = [
         MapLocation(name: "St Francis Memorial Hospital", country: "San Francisco", latitude: 37.789467, longitude: -122.416772),
         MapLocation(name: "The Ritz-Carlton, San Francisco", country: "San Francisco", latitude: 37.791965, longitude: -122.406903),
@@ -66,7 +74,7 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
         case .restricted:
             print("Your location is restricted likely due to parental constrols.")
         case .denied:
-            print(" ")
+            print("Your location is denied on settings")
         case .authorizedAlways, .authorizedWhenInUse:
             mapRegion = MKCoordinateRegion(
                 center: locationManager.location!.coordinate,
@@ -120,6 +128,7 @@ extension MKPointAnnotation {
         return annotation
     }
 }
+
 
 //    struct Product {
 //        let category: Category

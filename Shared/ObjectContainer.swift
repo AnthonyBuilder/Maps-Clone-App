@@ -24,7 +24,6 @@ struct ObjectContainer: View {
                 Image(systemName: icon)
                     .foregroundColor(.blue)
                     .font(.title)
-                Spacer()
                 VStack(alignment: .leading) {
                     Text(title)
                         .font(.headline)
