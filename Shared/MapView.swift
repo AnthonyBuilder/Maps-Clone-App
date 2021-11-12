@@ -13,24 +13,23 @@ import MapKit
 struct MapViewBody: View {
     
     @StateObject private var mapViewModel = MapViewModel()
-    @State private var bottomSheetShown = false
-    @State private var showPlacemark = false
-    
+    @State private var isSheetShowing = false
+    @State private var isSheetLocationShowing = false
+
     
     @State private var directions: [String] = []
     
     @State private var placemarkSearchText = ""
-    @State private var name = ""
-    @State private var title = ""
+    @State private var landmarkName = ""
+    @State private var landmarkTitle = ""
     
-    let spacerHeight: CGFloat = 50
-    
+    private let spacerHeight: CGFloat = 50
     
     func moveToLocation(to location: Landmark) {
         mapViewModel.updateMapRegion(location: location.coordinate)
-        title = location.title
-        name = location.name
-        bottomSheetShown = false
+        landmarkTitle = location.title
+        landmarkName = location.name
+        isSheetShowing = false
     }
     
     func showResultsSearchLocations() {
@@ -44,34 +43,54 @@ struct MapViewBody: View {
     var body: some View {
         GeometryReader { gr in
             VStack {
-                ZStack(alignment: Alignment(horizontal: .trailing, vertical: .top)) {
+                ZStack(alignment: Alignment(horizontal: .center, vertical: .top)) {
                     Map(coordinateRegion: $mapViewModel.mapRegion, showsUserLocation: true)
                         .ignoresSafeArea()
                     
-//                    // Settings Button...
-//                    Button(action: {
-//                        withAnimation(.spring()) {
-//                            bottomSheetShown.toggle()
-//                        }
-//                    }) {
-//                        Image(systemName: "magnifyingglass")
-//                            .font(.title2)
-//                            .foregroundColor(.black)
-//                            .padding(.vertical, 10)
-//                            .padding(.horizontal, 15)
-//                            .background(Color("BackgroundComponents"))
-//                            .cornerRadius(10)
-//                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: -5, y: -5)
-//                    }
+                    HStack {
+                        Spacer()
+                        
+                        // change terrain button
+                        Button(action: {
+                            withAnimation(.spring()) {
+                                isSheetShowing.toggle()
+                            }
+                        }) {
+                            Image(systemName: "globe.americas.fill")
+                                .font(.title2)
+                                .foregroundColor(.primary)
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 10)
+                                .background(Color("BackgroundComponents"))
+                                .cornerRadius(10)
+                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: -5, y: -5)
+                        }.padding(.trailing)
+                    }
                     
-            
                     
                     
-                    // Filter or Radio Button View
-                    BottomSheetViewBuilder(isShowing: $bottomSheetShown, maxHeight: gr.size.height - 50) {
+                    // Bottom sheet content current location and action for location
+                    if isSheetShowing == false && !landmarkName.isEmpty && !landmarkTitle.isEmpty {
+                        withAnimation(.spring()) {
+                            VStack {
+                                Spacer()
+                                InfoContainerView(landmarkName: landmarkName, landmarkTitle: landmarkTitle)
+                                    .padding(.horizontal, 10)
+                                    
+                            }.offset(y: -100)
+                        }
+                    }
+                    
+                   
+                    
+                    // Bottom sheet content Search location and actions
+                    BottomSheetViewBuilder(isShowing: $isSheetShowing, maxHeight: gr.size.height - 50) {
+                        
+                        Capsule().frame(width: 30, height: 5, alignment: .center).opacity(0.5).foregroundColor(.primary).padding(.top, 10)
+                        
                         HStack {
                             SearchBar {
-                                TextField("Buscar no mapa", text: $placemarkSearchText, onEditingChanged: { edit in
+                                TextField("Buscar por endereços", text: $placemarkSearchText, onEditingChanged: { edit in
                                     showResultsSearchLocations()
                                 }).padding(10)
                             }
@@ -81,10 +100,12 @@ struct MapViewBody: View {
                             Image(systemName: "person.circle.fill")
                                 .font(.title)
                         }
-                        .padding([.horizontal, .top])
+                        .padding([.horizontal])
                         .padding(.bottom, 10)
                         
-                        if bottomSheetShown == true {
+                        
+                        
+                        if isSheetShowing == true {
                             ScrollView {
                                 VStack(alignment: .leading, spacing: 0) {
                                     ForEach(mapViewModel.landmarks, id: \.id) { location in
@@ -92,7 +113,6 @@ struct MapViewBody: View {
                                             Button(action: {
                                                 withAnimation(.spring()) {
                                                     moveToLocation(to: location)
-                                                    bottomSheetShown = false
                                                 }
                                             }) {
                                                 VStack(alignment: .leading) {
@@ -114,7 +134,7 @@ struct MapViewBody: View {
                     }
                     .ignoresSafeArea()
                     .background(
-                        Color.black.opacity(0.3).ignoresSafeArea().opacity(bottomSheetShown ? 1 : 0)
+                        Color.black.opacity(0.3).ignoresSafeArea().opacity(isSheetShowing ? 1 : 0)
                     )
                 }
             }
