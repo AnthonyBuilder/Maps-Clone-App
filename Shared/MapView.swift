@@ -15,6 +15,7 @@ struct MapViewBody: View {
     @StateObject private var mapViewModel = MapViewModel()
     @State private var isSheetShowing = false
     @State private var isSheetLocationShowing = false
+    @State private var isSheetPersonShowing = false
 
     
     @State private var directions: [String] = []
@@ -85,13 +86,14 @@ struct MapViewBody: View {
                     
                     // Bottom sheet content Search location and actions
                     BottomSheetViewBuilder(isShowing: $isSheetShowing, maxHeight: gr.size.height - 50) {
-                        
-                        Capsule().frame(width: 30, height: 5, alignment: .center).opacity(0.5).foregroundColor(.primary).padding(.top, 10)
-                        
                         HStack {
                             SearchBar {
                                 TextField("Buscar por endereços", text: $placemarkSearchText, onEditingChanged: { edit in
                                     showResultsSearchLocations()
+                                    if placemarkSearchText.isEmpty {
+                                        placemarkSearchText = ""
+                                        showResultsSearchLocations()
+                                    }
                                 }).padding(10)
                             }
                             
@@ -99,6 +101,9 @@ struct MapViewBody: View {
                             
                             Image(systemName: "person.circle.fill")
                                 .font(.title)
+                                .onTapGesture {
+                                    isSheetPersonShowing.toggle()
+                                }
                         }
                         .padding([.horizontal])
                         .padding(.bottom, 10)
@@ -143,12 +148,6 @@ struct MapViewBody: View {
     }
 }
 
-
-struct ContentViewMapView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
-}
 
 
 //struct MapView: UIViewRepresentable {

@@ -32,12 +32,13 @@ struct BottomSheetViewBuilder<Content: View>: View {
             Spacer()
             if #available(iOS 15.0, *) {
                 VStack(spacing: 18) {
+                    Capsule().frame(width: 30, height: 5, alignment: .center).opacity(0.5).foregroundColor(.primary).padding(.top, 10)
                     content
                 }
                 .frame(maxHeight: .infinity, alignment: .top)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
                 .offset(y: maxHeight)
-                .offset(y: offset)
+                .offset(y: isShowing ? offset : 0)
                 .gesture(
                     DragGesture().updating($gestureOffset, body: { value, out, _ in
                         out = value.translation.height
