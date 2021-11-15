@@ -21,6 +21,7 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
     var hasSetRegion = false
     
     @Published var landmarks: [Landmark] = [Landmark]()
+
     @Published var location: CLLocation?
     @Published var mapRegion = MKCoordinateRegion(
         center:
@@ -37,11 +38,11 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
         finishPoint = finalPoint
     }
     
-    let MapLocations = [
-        MapLocation(name: "St Francis Memorial Hospital", country: "San Francisco", latitude: 37.789467, longitude: -122.416772),
-        MapLocation(name: "The Ritz-Carlton, San Francisco", country: "San Francisco", latitude: 37.791965, longitude: -122.406903),
-        MapLocation(name: "Honey Honey Cafe & Crepery", country: "San Francisco", latitude: 37.787891, longitude: -122.411223)
-    ]
+    @Published var MapLocations: [MapLocation] = []
+    
+    func saveLocation(selfLocation: MapLocation) {
+        MapLocations.append(selfLocation)
+    }
     
     
     // check localization is authorized 

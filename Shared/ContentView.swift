@@ -9,7 +9,9 @@ import MapKit
 
 struct ContentView: View {
     var body: some View {
-        MapViewBody()
+        if #available(iOS 15.0, *) {
+            MapViewBody()
+        }
     }
 }
 

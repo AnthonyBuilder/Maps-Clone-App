@@ -36,7 +36,7 @@ struct BottomSheetViewBuilder<Content: View>: View {
                     content
                 }
                 .frame(maxHeight: .infinity, alignment: .top)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 25))
                 .offset(y: maxHeight)
                 .offset(y: isShowing ? offset : 0)
                 .gesture(
@@ -47,7 +47,6 @@ struct BottomSheetViewBuilder<Content: View>: View {
                         withAnimation(.spring()) {
                             // Logic for moving states
                             // Up down or mid...
-                            
                             if -offset > 100 && -offset < maxHeight - 250 / 2 {
                                 // Mid...
                                 offset = -(maxHeight / 3) - 50
@@ -62,7 +61,6 @@ struct BottomSheetViewBuilder<Content: View>: View {
                         }
                         lastOffset = offset
                     })
-                        
                 )
             }
         }
@@ -72,16 +70,5 @@ struct BottomSheetViewBuilder<Content: View>: View {
         DispatchQueue.main.async {
             self.offset = gestureOffset + lastOffset
         }
-    }
-}
-
-
-struct CustomCorner: Shape {
-    var corners: UIRectCorner
-    
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners,  cornerRadii: CGSize(width: 25, height: 25))
-        
-        return Path(path.cgPath)
     }
 }

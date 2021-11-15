@@ -10,26 +10,28 @@ import MapKit
 
 
 // Main map View
+@available(iOS 15.0, *)
 struct MapViewBody: View {
     
-    @StateObject private var mapViewModel = MapViewModel()
+    @StateObject var mapViewModel = MapViewModel()
     @State private var isSheetShowing = false
-    @State private var isSheetLocationShowing = false
     @State private var isSheetPersonShowing = false
-
-    
-    @State private var directions: [String] = []
+    @State private var isSavedLocationsShowing = true
+    @FocusState private var focusSheet: Bool
     
     @State private var placemarkSearchText = ""
+    
     @State private var landmarkName = ""
     @State private var landmarkTitle = ""
+    @State private var landmarkCoordinate: CLLocationCoordinate2D?
     
-    private let spacerHeight: CGFloat = 50
+    
     
     func moveToLocation(to location: Landmark) {
         mapViewModel.updateMapRegion(location: location.coordinate)
         landmarkTitle = location.title
         landmarkName = location.name
+        landmarkCoordinate = location.coordinate
         isSheetShowing = false
     }
     
@@ -46,6 +48,10 @@ struct MapViewBody: View {
             VStack {
                 ZStack(alignment: Alignment(horizontal: .center, vertical: .top)) {
                     Map(coordinateRegion: $mapViewModel.mapRegion, showsUserLocation: true)
+                        .onTapGesture {
+                            focusSheet = false
+                            isSheetShowing = false
+                        }
                         .ignoresSafeArea()
                     
                     HStack {
@@ -75,14 +81,20 @@ struct MapViewBody: View {
                         withAnimation(.spring()) {
                             VStack {
                                 Spacer()
-                                InfoContainerView(landmarkName: landmarkName, landmarkTitle: landmarkTitle)
+                                InfoContainerView(landmarkName: $landmarkName, landmarkTitle: $landmarkTitle) {
+                                    Button(action: {
+                                        // Save location
+                                        mapViewModel.saveLocation(selfLocation: MapLocation(name: landmarkName, country: landmarkTitle, latitude: landmarkCoordinate!.latitude, longitude: landmarkCoordinate!.longitude))
+                                        print(mapViewModel.MapLocations)
+                                    }) {
+                                        Image(systemName: "heart.circle")
+                                            .font(.title)
+                                    }
+                                }
                                     .padding(.horizontal, 10)
-                                    
                             }.offset(y: -100)
                         }
                     }
-                    
-                   
                     
                     // Bottom sheet content Search location and actions
                     BottomSheetViewBuilder(isShowing: $isSheetShowing, maxHeight: gr.size.height - 50) {
@@ -90,11 +102,16 @@ struct MapViewBody: View {
                             SearchBar {
                                 TextField("Buscar por endereços", text: $placemarkSearchText, onEditingChanged: { edit in
                                     showResultsSearchLocations()
+                                    isSheetShowing = true
+                                    focusSheet = false
                                     if placemarkSearchText.isEmpty {
                                         placemarkSearchText = ""
                                         showResultsSearchLocations()
+                                        isSheetShowing = false
                                     }
-                                }).padding(10)
+                                })
+                                    .focused($focusSheet)
+                                    .padding(10)
                             }
                             
                             Spacer()
@@ -109,44 +126,114 @@ struct MapViewBody: View {
                         .padding(.bottom, 10)
                         
                         
-                        
-                        if isSheetShowing == true {
-                            ScrollView {
-                                VStack(alignment: .leading, spacing: 0) {
-                                    ForEach(mapViewModel.landmarks, id: \.id) { location in
-                                        VStack(alignment: .leading, spacing: 13) {
-                                            Button(action: {
-                                                withAnimation(.spring()) {
-                                                    moveToLocation(to: location)
-                                                }
-                                            }) {
-                                                VStack(alignment: .leading) {
-                                                    Text(location.name)
-                                                        .font(.headline)
-                                                        .multilineTextAlignment(.leading)
-                                                        .foregroundColor(.primary)
-                                                    Text(location.title)
-                                                        .font(.subheadline)
-                                                        .multilineTextAlignment(.leading)
-                                                        .foregroundColor(.secondary)
-                                                }.padding()
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 0) {
+                                ForEach(mapViewModel.landmarks, id: \.id) { location in
+                                    VStack(alignment: .leading, spacing: 13) {
+                                        Button(action: {
+                                            withAnimation(.spring()) {
+                                                moveToLocation(to: location)
                                             }
+                                        }) {
+                                            VStack(alignment: .leading) {
+                                                Text(location.name)
+                                                    .font(.headline)
+                                                    .multilineTextAlignment(.leading)
+                                                    .foregroundColor(.primary)
+                                                Text(location.title)
+                                                    .font(.subheadline)
+                                                    .multilineTextAlignment(.leading)
+                                                    .foregroundColor(.secondary)
+                                            }.padding()
                                         }
                                     }
-                                }.padding(.vertical)
-                            }
+                                }
+                            }.padding(.vertical)
+                            
+                            VStack {
+                                HStack {
+                                    Text("Locais favoritos")
+                                        .font(.title)
+                                        .fontWeight(.bold)
+                                    Spacer()
+                                    
+                                    Button(action: {
+                                        // show list saved locations
+                                        withAnimation(.spring()) {
+                                            isSavedLocationsShowing.toggle()
+                                        }
+                                    }) {
+                                        Image(systemName: "chevron.down")
+                                            .rotationEffect(isSavedLocationsShowing ? .degrees(180) : .degrees(0) )
+                                            .animation(.easeInOut)
+                                            .font(.title2)
+                                            .foregroundColor(.primary)
+                                    }
+                                }.padding()
+                                
+                                
+                                if isSavedLocationsShowing == true {
+                                    Divider()
+                                    VStack(alignment: .leading, spacing: 15) {
+                                        ForEach(mapViewModel.MapLocations) { savedLocations in
+                                            HStack {
+                                                Text(savedLocations.name)
+                                                    .font(.headline)
+                                                Spacer()
+                                                Image(systemName: "xmark")
+                                            }
+                                        }
+                                    }.padding()
+                                }
+                            }.padding(.vertical)
                         }
                     }
                     .ignoresSafeArea()
-                    .background(
-                        Color.black.opacity(0.3).ignoresSafeArea().opacity(isSheetShowing ? 1 : 0)
-                    )
+                    
+                    if isSheetPersonShowing == true {
+                        withAnimation(.spring()) {
+                            BottomSheetViewBuilder(isShowing: $isSheetPersonShowing, maxHeight: gr.size.height - 100) {
+                                VStack {
+                                    HStack {
+                                        Text("Anthony José")
+                                            .font(.title)
+                                            .fontWeight(.bold)
+                                        
+                                        Spacer()
+                                        
+                                        Button(action: {
+                                            isSheetPersonShowing = false
+                                        }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .font(.title2)
+                                        }
+                                    }
+                                    
+                                    VStack(alignment: .leading) {
+                                        Button(action: {
+                                            // show favorites
+                                        }){
+                                            HStack {
+                                                Image(systemName: "heart.fill")
+                                                Text("Favoritos")
+                                            }
+                                        }
+                                    }
+                                }.padding()
+                            }
+                            .ignoresSafeArea()
+                            .background(
+                                Color.black.opacity(0.3).ignoresSafeArea().opacity(isSheetShowing ? 1 : 0)
+                            )
+                        }
+                    }
                 }
             }
-            
         }
     }
 }
+
+
 
 
 
