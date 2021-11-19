@@ -7,11 +7,13 @@
 
 import SwiftUI
 import MapKit
-
+import CoreLocation
 
 // Main map View
 @available(iOS 15.0, *)
 struct MapViewBody: View {
+    
+    
     
     @StateObject var mapViewModel = MapViewModel()
     @State private var isSheetShowing = false
@@ -25,7 +27,12 @@ struct MapViewBody: View {
     @State private var landmarkTitle = ""
     @State private var landmarkCoordinate: CLLocationCoordinate2D?
     
+    @State private var firstPoint: MKPlacemark = MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: 40.71, longitude: -74))
+    @State private var finishPoint: MKPlacemark = MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: 42.36, longitude: -71.05))
     
+    let mapView = MKMapView()
+    
+    @State var directions: [String] = [String]()
     
     func moveToLocation(to location: Landmark) {
         mapViewModel.updateMapRegion(location: location.coordinate)
@@ -47,7 +54,7 @@ struct MapViewBody: View {
         GeometryReader { gr in
             VStack {
                 ZStack(alignment: Alignment(horizontal: .center, vertical: .top)) {
-                    Map(coordinateRegion: $mapViewModel.mapRegion, showsUserLocation: true)
+                    MapView(directions: $directions, region: $mapViewModel.mapRegion, firstPoint: $firstPoint, finishPoint: $finishPoint)
                         .onTapGesture {
                             focusSheet = false
                             isSheetShowing = false
@@ -75,23 +82,33 @@ struct MapViewBody: View {
                     }
                     
                     
-                    
                     // Bottom sheet content current location and action for location
                     if isSheetShowing == false && !landmarkName.isEmpty && !landmarkTitle.isEmpty {
                         withAnimation(.spring()) {
                             VStack {
                                 Spacer()
                                 InfoContainerView(landmarkName: $landmarkName, landmarkTitle: $landmarkTitle) {
-                                    Button(action: {
-                                        // Save location
-                                        mapViewModel.saveLocation(selfLocation: MapLocation(name: landmarkName, country: landmarkTitle, latitude: landmarkCoordinate!.latitude, longitude: landmarkCoordinate!.longitude))
-                                        print(mapViewModel.MapLocations)
-                                    }) {
-                                        Image(systemName: "heart.circle")
-                                            .font(.title)
+                                    HStack {
+                                        Button(action: {
+                                            // set route
+                                            firstPoint = MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: -23.2950886, longitude: -46.7326319))
+                                            
+                                            finishPoint = MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: landmarkCoordinate!.latitude, longitude: landmarkCoordinate!.longitude))
+                                            
+                                        }) {
+                                            Image(systemName: "car.fill")
+                                                .font(.title)
+                                        }
+                                        Button(action: {
+                                            // Save location
+                                            mapViewModel.saveLocation(selfLocation: MapLocation(name: landmarkName, country: landmarkTitle, latitude: landmarkCoordinate!.latitude, longitude: landmarkCoordinate!.longitude))
+                                            print(mapViewModel.MapLocations)
+                                        }) {
+                                            Image(systemName: "heart.circle")
+                                                .font(.title)
+                                        }
                                     }
-                                }
-                                    .padding(.horizontal, 10)
+                                }.padding(.horizontal, 10)
                             }.offset(y: -100)
                         }
                     }
@@ -190,6 +207,7 @@ struct MapViewBody: View {
                     }
                     .ignoresSafeArea()
                     
+                    // Bottom sheet showing user informations
                     if isSheetPersonShowing == true {
                         withAnimation(.spring()) {
                             BottomSheetViewBuilder(isShowing: $isSheetPersonShowing, maxHeight: gr.size.height - 100) {
@@ -234,54 +252,72 @@ struct MapViewBody: View {
 }
 
 
+struct MapView: UIViewRepresentable {
+    typealias UIViewType = MKMapView
 
+    @StateObject private var mapViewModel = MapViewModel()
+    @Binding var directions: [String]
+    @Binding var region: MKCoordinateRegion
+    
+    @Binding var firstPoint: MKPlacemark
+    @Binding var finishPoint: MKPlacemark
 
+    init(directions: Binding<[String]>, region: Binding<MKCoordinateRegion>, firstPoint: Binding<MKPlacemark>, finishPoint: Binding<MKPlacemark>) {
+        self._directions = directions
+        self._region = region
+        self._firstPoint = firstPoint
+        self._finishPoint = finishPoint
+    }
+    
+    func makeCoordinator() -> MapViewCoordinator {
+        return MapViewCoordinator()
+    }
 
-//struct MapView: UIViewRepresentable {
-//    typealias UIViewType = MKMapView
-//
-//    @StateObject private var mapViewModel = MapViewModel()
-//    @Binding var directions: [String]
-//
-//
-//    func makeCoordinator() -> MapViewCoordinator {
-//        return MapViewCoordinator()
-//    }
-//
-//    func makeUIView(context: Context) -> MKMapView {
-//        let mapView = MKMapView()
-//        mapView.delegate = context.coordinator
-//
-//        mapView.setRegion(mapViewModel.mapRegion, animated: true)
-//
-//        let request = MKDirections.Request()
-//        request.source = MKMapItem(placemark: mapViewModel.initialPoint)
-//        request.destination = MKMapItem(placemark: mapViewModel.finishPoint)
-//        request.transportType = .automobile
-//
-//
-//        let directions = MKDirections(request: request)
-//        directions.calculate { response, error in
-//            guard let route = response?.routes.first else { return }
-//            mapView.addAnnotations([mapViewModel.initialPoint, mapViewModel.finishPoint])
-//            mapView.addOverlay(route.polyline)
-//            mapView.setVisibleMapRect(route.polyline.boundingMapRect, edgePadding: UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20), animated: true)
-//            self.directions = route.steps.map {$0.instructions}.filter { !$0.isEmpty}
-//        }
-//
-//        return mapView
-//    }
-//
-//    func updateUIView(_ uiView: MKMapView, context: Context) {
-//    }
-//
-//    class MapViewCoordinator: NSObject, MKMapViewDelegate {
-//        func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
-//            let renderer = MKPolylineRenderer(overlay: overlay)
-//            renderer.strokeColor = .systemBlue
-//            renderer.lineWidth = 5
-//            return renderer
-//        }
-//    }
-//}
-//
+    func makeUIView(context: Context) -> MKMapView {
+        let mapView = MKMapView()
+        mapView.delegate = context.coordinator
+
+        mapView.setRegion(region, animated: true)
+        
+        mapView.showsUserLocation = true
+        
+        setMapRoute(mapView: mapView)
+
+        return mapView
+    }
+
+    func updateUIView(_ uiView: MKMapView, context: Context) {
+        setMapRoute(mapView: uiView)
+    }
+    
+    func setMapRoute(mapView: MKMapView) {
+        DispatchQueue.main.async {
+            let request = MKDirections.Request()
+            request.source = MKMapItem(placemark: firstPoint)
+            request.destination = MKMapItem(placemark: finishPoint)
+            request.transportType = .automobile
+            
+            let directions = MKDirections(request: request)
+            directions.calculate { response, error in
+                guard let route = response?.routes.first else { return }
+                let overlays = mapView.overlays
+                mapView.removeOverlays(overlays)
+                mapView.removeAnnotations([firstPoint, finishPoint])
+                mapView.addAnnotations([firstPoint, finishPoint])
+                mapView.addOverlay(route.polyline)
+                mapView.setVisibleMapRect(route.polyline.boundingMapRect, edgePadding: UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20), animated: true)
+                self.directions = route.steps.map {$0.instructions}.filter { !$0.isEmpty}
+            }
+        }
+    }
+
+    class MapViewCoordinator: NSObject, MKMapViewDelegate {
+        func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+            let renderer = MKPolylineRenderer(overlay: overlay)
+            renderer.strokeColor = .systemBlue
+            renderer.lineWidth = 5
+            return renderer
+        }
+    }
+}
+

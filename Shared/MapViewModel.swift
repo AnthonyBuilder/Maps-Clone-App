@@ -44,7 +44,6 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
         MapLocations.append(selfLocation)
     }
     
-    
     // check localization is authorized 
     func checkIfLocatioServiceIsEnabled() {
         if CLLocationManager.locationServicesEnabled() {
